@@ -118,6 +118,8 @@ rec {
     intelhex
     colorama
   ]);
+  nucleo-n657x0-q = pkgs.callPackage ./nucleo-n657x0-q { };
+  st-openocd = pkgs.callPackage ./st-openocd { };
   avr-toolchain = pkgs.callPackage ./avr { };
 
   # Helper function to build individual cross toolchains
