@@ -106,10 +106,12 @@
                 inherit (pkgs) gcc-arm-embedded qemu coreutils python3 git;
               };
           };
+
+          # arm-none-eabi-gcc + Zephyr/hal_stm32 platform files
           packages.nucleo-n657x0-q = util.nucleo-n657x0-q;
           devShells.nucleo-n657x0-q = util.mkShell {
             packages = builtins.attrValues ({
-              inherit (config.packages) linters nucleo-n657x0-q st-openocd;
+              inherit (config.packages) linters nucleo-n657x0-q st-openocd zephyr;
               inherit (pkgs) gcc-arm-embedded coreutils git libffi pkg-config;
             });
           };

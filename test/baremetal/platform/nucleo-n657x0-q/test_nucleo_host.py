@@ -349,6 +349,8 @@ class NucleoHostTest(unittest.TestCase):
             "mlkem_cmdline_block": None,
             "mlk_cmdline_block": "0x10000",
             "__wrap_main": "0x200",
+            "HardFault_Handler": "0x300",
+            "nucleo_layout_fail": "0x400",
             "Reset_Handler": "0x4",
             "nucleo_stdout_capture": None,
             "nucleo_stdout_capture_len": None,
@@ -425,6 +427,8 @@ class NucleoHostTest(unittest.TestCase):
             "mlkem_cmdline_block": "0x10000",
             "mlk_cmdline_block": None,
             "__wrap_main": "0x200",
+            "HardFault_Handler": "0x300",
+            "nucleo_layout_fail": "0x400",
             "Reset_Handler": "0x4",
             "nucleo_stdout_capture": "0x34080000",
             "nucleo_stdout_capture_len": "0x30000100",
@@ -596,6 +600,8 @@ class NucleoHostTest(unittest.TestCase):
             port=3333,
             wrap_main_break="*0x100",
             reset_handler_jump="*0x5",
+            hardfault_break="*0x200",
+            layout_fail_break="*0x300",
             argv_bin="argv.bin",
             arg_block_addr="0x70000",
             arg_block_sym="mlk_cmdline_block",
@@ -618,8 +624,8 @@ class NucleoHostTest(unittest.TestCase):
                 "restore argv.bin binary 0x70000",
             ],
         )
-        self.assertIn("break HardFault_Handler", gdb_lines)
-        self.assertIn("break nucleo_layout_fail", gdb_lines)
+        self.assertIn("break *0x200", gdb_lines)
+        self.assertIn("break *0x300", gdb_lines)
         expected_dump = (
             "  dump binary memory stdout.bin 0x34080000 0x34080000 + $nucleo_stdout_len"
         )

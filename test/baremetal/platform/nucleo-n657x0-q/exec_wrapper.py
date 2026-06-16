@@ -211,6 +211,14 @@ def _run_once():
     wrap_main_break = "__wrap_main"
     if wrap_main_addr is not None:
         wrap_main_break = f"*{wrap_main_addr}"
+    hardfault_addr = _resolve_symbol_addr(elf, "HardFault_Handler")
+    hardfault_break = "HardFault_Handler"
+    if hardfault_addr is not None:
+        hardfault_break = f"*{hardfault_addr}"
+    layout_fail_addr = _resolve_symbol_addr(elf, "nucleo_layout_fail")
+    layout_fail_break = "nucleo_layout_fail"
+    if layout_fail_addr is not None:
+        layout_fail_break = f"*{layout_fail_addr}"
     reset_handler_addr = _resolve_symbol_addr(elf, "Reset_Handler")
     reset_handler_jump = "Reset_Handler"
     if reset_handler_addr is not None:
@@ -311,6 +319,8 @@ def _run_once():
                 port=port,
                 wrap_main_break=wrap_main_break,
                 reset_handler_jump=reset_handler_jump,
+                hardfault_break=hardfault_break,
+                layout_fail_break=layout_fail_break,
                 argv_bin=argv_bin,
                 arg_block_addr=arg_block_addr,
                 arg_block_sym=arg_block_sym,

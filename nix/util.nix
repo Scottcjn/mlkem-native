@@ -118,7 +118,7 @@ rec {
     intelhex
     colorama
   ]);
-  nucleo-n657x0-q = pkgs.callPackage ./nucleo-n657x0-q { };
+  nucleo-n657x0-q = pkgs.callPackage ./nucleo-n657x0-q { inherit zephyr; };
   st-openocd = pkgs.callPackage ./st-openocd { };
   avr-toolchain = pkgs.callPackage ./avr { };
 

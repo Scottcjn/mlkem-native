@@ -7,11 +7,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "main.h"
 #include "semihosting_syscall.h"
 #include "stm32n6xx.h"
 #include "stm32n6xx_hal.h"
-#include "stm32n6xx_it.h"
+
+void SystemClock_Config(void);
+void HardFault_Handler(void);
 
 typedef struct cmdline_s
 {

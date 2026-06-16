@@ -103,7 +103,7 @@ SECTIONS
     KEEP(*(.fini_array*))
     PROVIDE_HIDDEN(__fini_array_end = .);
   } > ITCM
-  
+
   .itcm_probe MAX(., ORIGIN(ITCM) + 0x00010000) :
   {
     . = ALIGN(32);
