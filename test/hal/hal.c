@@ -42,7 +42,16 @@
 
 #include "hal.h"
 
-#if defined(PMU_CYCLES)
+#if defined(__ZEPHYR__)
+
+/* Zephyr: use the kernel cycle counter. */
+#include <zephyr/kernel.h>
+
+void enable_cyclecounter(void) {}
+void disable_cyclecounter(void) {}
+uint64_t get_cyclecounter(void) { return k_cycle_get_32(); }
+
+#elif defined(PMU_CYCLES)
 
 #if defined(__x86_64__)
 
