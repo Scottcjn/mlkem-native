@@ -42,12 +42,15 @@ def build_run_script(
         "commands",
         "  echo [[NUCLEO-HARDFAULT]]\\n",
         "end",
-        f"break {layout_fail_break}",
-        "commands",
-        "  echo [[NUCLEO-LAYOUT-FAIL]]\\n",
-        "end",
-        "continue",
     ]
+    if layout_fail_break:
+        gdb_lines += [
+            f"break {layout_fail_break}",
+            "commands",
+            "  echo [[NUCLEO-LAYOUT-FAIL]]\\n",
+            "end",
+        ]
+    gdb_lines += ["continue"]
     if stdout_capture_addr and stdout_capture_len_addr:
         gdb_lines += stdout_capture_dump_commands(
             stdout_capture_addr=stdout_capture_addr,

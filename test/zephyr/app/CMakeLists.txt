@@ -16,13 +16,35 @@ target_sources(app PRIVATE
   ${R}/mlkem/mlkem_native.c
   ${R}/${ZEPHYR_TEST_SRC}
   ${R}/test/notrandombytes/notrandombytes.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/shim.c
 )
 
 target_include_directories(app PRIVATE
   ${R}/mlkem
   ${R}/test/notrandombytes
 )
+
+if(ZEPHYR_NUCLEO_N657X0_Q)
+  target_sources(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/shim_nucleo_n657x0_q.c)
+  target_compile_definitions(app PRIVATE
+    MLK_ZEPHYR_NUCLEO_N657X0_Q
+    printf=__wrap_printf
+    fprintf=__wrap_fprintf
+    puts=__wrap_puts
+    putchar=__wrap_putchar
+    fflush=__wrap_fflush
+    exit=__wrap_exit
+  )
+  target_link_options(app PRIVATE
+    -Wl,--wrap=printf
+    -Wl,--wrap=fprintf
+    -Wl,--wrap=puts
+    -Wl,--wrap=putchar
+    -Wl,--wrap=fflush
+    -Wl,--wrap=exit
+  )
+else()
+  target_sources(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/shim.c)
+endif()
 
 target_compile_definitions(app PRIVATE MLK_CONFIG_PARAMETER_SET=${ZEPHYR_LEVEL})
 

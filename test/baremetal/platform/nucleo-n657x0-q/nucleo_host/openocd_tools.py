@@ -84,14 +84,22 @@ def runtime_gdbserver_cmd(
     transport="swd",
 ):
     """Return the OpenOCD command used as the runtime GDB server."""
+    if os.environ.get("OPENOCD_HOTPLUG"):
+        reset_setup = [
+            "-c",
+            "reset_config none",
+            "-c",
+            "stm32n6x.cpu configure -work-area-size 0",
+        ]
+    else:
+        reset_setup = ["-c", "reset_config srst_only srst_nogate"]
+
     return openocd_base_args(
         openocd=openocd,
         speed=speed,
         serial=serial,
         transport=transport,
-    ) + [
-        "-c",
-        "reset_config srst_only srst_nogate",
+    ) + reset_setup + [
         "-c",
         f"gdb_port {port}",
         "-c",
@@ -115,16 +123,21 @@ def flexmem_script_lines(
     expected_mask=0xFF,
     expected_value=0x99,
     connect_under_reset=True,
+    hotplug=False,
 ):
     """Return an OpenOCD TCL script for RAM-loading the FLEXMEM helper."""
     quoted_elf = "{" + elf.replace("\\", "\\\\").replace("}", "\\}") + "}"
-    reset_config = "reset_config srst_only srst_nogate"
-    if connect_under_reset:
-        reset_config += " connect_assert_srst"
+    if hotplug:
+        reset_config = "reset_config none"
+        attach_lines = ["init", "halt"]
+    else:
+        reset_config = "reset_config srst_only srst_nogate"
+        if connect_under_reset:
+            reset_config += " connect_assert_srst"
+        attach_lines = ["init", "reset halt"]
     return [
         reset_config,
-        "init",
-        "reset halt",
+        *attach_lines,
         f"load_image {quoted_elf}",
         f"reg msp {estack_addr}",
         f"reg pc {main_thumb}",

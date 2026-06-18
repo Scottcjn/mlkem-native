@@ -177,6 +177,7 @@
           devShells.zephyr = util.mkShell {
             packages = builtins.attrValues
               {
+                inherit (config.packages) nucleo-n657x0-q st-openocd;
                 inherit (util) zephyr;
                 inherit (pkgs) gcc-arm-embedded qemu cmake ninja dtc gperf coreutils git;
               } ++ [ util.zephyrPythonEnv ];

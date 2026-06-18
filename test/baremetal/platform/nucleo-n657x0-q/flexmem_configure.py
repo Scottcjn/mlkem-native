@@ -76,6 +76,7 @@ def openocd_cli():
 
 def _openocd_config_cmd(openocd, elf, main_thumb, estack_addr, timeout_s, under_reset):
     """Build the OpenOCD command for one FLEXMEM configuration attempt."""
+    hotplug = under_reset is None
     script_lines = flexmem_script_lines(
         elf=elf,
         main_thumb=main_thumb,
@@ -84,7 +85,8 @@ def _openocd_config_cmd(openocd, elf, main_thumb, estack_addr, timeout_s, under_
         flexmem_addr=CM55TCMCR_ADDR,
         expected_mask=CM55TCMCR_EXPECTED_MASK,
         expected_value=CM55TCMCR_EXPECTED_VALUE,
-        connect_under_reset=under_reset,
+        connect_under_reset=bool(under_reset),
+        hotplug=hotplug,
     )
     with tempfile.NamedTemporaryFile("w", delete=False, suffix=".cfg") as script:
         script.write("\n".join(script_lines))
@@ -129,6 +131,16 @@ def run_openocd_config(elf, main_thumb, estack_addr, timeout_s):
     if openocd is None:
         return 2
 
+    if os.environ.get("FLEXMEM_CONFIG_HOTPLUG_ONLY"):
+        cp = _run_openocd_config_once(
+            openocd, elf, main_thumb, estack_addr, timeout_s, under_reset=None
+        )
+        if os.environ.get("FLEXMEM_VERBOSE") or cp.returncode != 0:
+            log_output(cp.stdout, logging.DEBUG if cp.returncode == 0 else logging.ERROR)
+        if cp.returncode != 0:
+            err("OpenOCD FLEXMEM config RAM download/start failed")
+        return cp.returncode
+
     cp = _run_openocd_config_once(
         openocd, elf, main_thumb, estack_addr, timeout_s, under_reset=True
     )
@@ -141,6 +153,20 @@ def run_openocd_config(elf, main_thumb, estack_addr, timeout_s):
             )
         cp = _run_openocd_config_once(
             openocd, elf, main_thumb, estack_addr, timeout_s, under_reset=False
+        )
+    if (
+        cp.returncode != 0
+        and _openocd_init_failed(cp.stdout)
+        and os.environ.get("FLEXMEM_CONFIG_HOTPLUG")
+    ):
+        if os.environ.get("FLEXMEM_VERBOSE"):
+            log_output(cp.stdout, logging.DEBUG)
+            LOG.debug(
+                "OpenOCD reset attach failed; retrying FLEXMEM configuration "
+                "with hotplug/no-reset attach"
+            )
+        cp = _run_openocd_config_once(
+            openocd, elf, main_thumb, estack_addr, timeout_s, under_reset=None
         )
     if os.environ.get("FLEXMEM_VERBOSE") or cp.returncode != 0:
         log_output(cp.stdout, logging.DEBUG if cp.returncode == 0 else logging.ERROR)

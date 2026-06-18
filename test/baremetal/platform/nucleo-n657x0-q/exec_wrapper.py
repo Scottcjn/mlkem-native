@@ -197,6 +197,14 @@ def _run_once():
         """Resolve a symbol with the wrapper-selected binary utilities."""
         return resolve_symbol(elf_path, sym, nm=nm, readelf=readelf)
 
+    def _resolve_first_symbol(elf_path: str, symbols):
+        """Return the first resolvable symbol name and address."""
+        for sym in symbols:
+            addr = _resolve_symbol_addr(elf_path, sym)
+            if addr is not None:
+                return sym, addr
+        return symbols[0], None
+
     # Try both expected names in case of historical rename
     for cand in (arg_block_sym, "mlk_cmdline_block"):
         addr = _resolve_symbol_addr(elf, cand)
@@ -207,24 +215,28 @@ def _run_once():
 
     # Numeric breakpoints avoid GDB symbol lookup surprises after loading
     # RAM ELFs.
-    wrap_main_addr = _resolve_symbol_addr(elf, "__wrap_main")
-    wrap_main_break = "__wrap_main"
+    wrap_main_sym, wrap_main_addr = _resolve_first_symbol(elf, ["__wrap_main"])
+    wrap_main_break = wrap_main_sym
     if wrap_main_addr is not None:
         wrap_main_break = f"*{wrap_main_addr}"
-    hardfault_addr = _resolve_symbol_addr(elf, "HardFault_Handler")
-    hardfault_break = "HardFault_Handler"
+    hardfault_sym, hardfault_addr = _resolve_first_symbol(
+        elf, ["HardFault_Handler", "z_arm_hard_fault"]
+    )
+    hardfault_break = hardfault_sym
     if hardfault_addr is not None:
         hardfault_break = f"*{hardfault_addr}"
     layout_fail_addr = _resolve_symbol_addr(elf, "nucleo_layout_fail")
-    layout_fail_break = "nucleo_layout_fail"
-    if layout_fail_addr is not None:
-        layout_fail_break = f"*{layout_fail_addr}"
-    reset_handler_addr = _resolve_symbol_addr(elf, "Reset_Handler")
-    reset_handler_jump = "Reset_Handler"
+    layout_fail_break = (
+        f"*{layout_fail_addr}" if layout_fail_addr is not None else None
+    )
+    reset_handler_sym, reset_handler_addr = _resolve_first_symbol(
+        elf, ["Reset_Handler", "z_arm_reset"]
+    )
+    reset_handler_jump = reset_handler_sym
     if reset_handler_addr is not None:
         reset_handler_jump = f"*{hex(int(reset_handler_addr, 16) | 1)}"
     if reset_handler_addr is None:
-        err("Failed to resolve Reset_Handler in ELF.")
+        err("Failed to resolve Reset_Handler/z_arm_reset in ELF.")
         return 2
 
     # Resolve the RAM stdout buffer so GDB can dump target output after
@@ -235,7 +247,7 @@ def _run_once():
         elf, "nucleo_stdout_capture_truncated"
     )
     stdout_capture_size = int(
-        os.environ.get("NUCLEO_STDOUT_CAPTURE_SIZE", str(1536 * 1024))
+        os.environ.get("NUCLEO_STDOUT_CAPTURE_SIZE", str(1280 * 1024))
     )
     # Allow override of base address via env (hex string)
     arg_block_addr_env = os.environ.get("ARG_BLOCK_ADDR")
